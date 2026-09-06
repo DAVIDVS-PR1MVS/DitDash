@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="DitDash/assets/logo.png" alt="DitDash Logo" width="120" />
+  <img src="assets/logo.png" alt="DitDash Logo" width="120" />
 
   # DitDash
 
