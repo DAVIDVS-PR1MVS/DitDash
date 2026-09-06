@@ -51,6 +51,9 @@ O repositório inclui o script `build.py` para automatizar a geração do execut
 
 - Python 3.x instalado
 
+### Como usar?
+- use --help para obter a forma correta de usar
+
 ---
 
 Este projeto está distribuído sob a licença MIT. Consulte o arquivo LICENSE para mais detalhes.
