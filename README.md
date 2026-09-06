@@ -71,6 +71,8 @@ python build.py --isolated
 | `--icon` | Texto | `assets/icon.ico` | Especifica o caminho para o arquivo de ícone (.ico). | `python build.py --icon assets/custom.ico` |
 | `--arch` | Opção | Nativa do SO | Define a arquitetura alvo (`x86_64`, `x86`, `arm64`, `universal2`). | `python build.py --arch x86_64` |
 
+'''
+
 ---
 
 Este projeto está distribuído sob a licença MIT. Consulte o arquivo LICENSE para mais detalhes.
