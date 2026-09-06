@@ -16,7 +16,7 @@
 
 ## Sobre
 
-O **DitDash** é uma ferramenta de linha de comando leve voltada para a conversão bidirecional entre texto e Código Morse. O projeto foi estruturado para realizar o tratamento automático das cadeias de caracteres inseridas, tratando acentuações e padronizando o espaçamento entre palavras e letras.
+O **DitPlex** é uma ferramenta de linha de comando leve voltada para a conversão bidirecional entre texto e Código Morse. O projeto foi estruturado para realizar o tratamento automático das cadeias de caracteres inseridas, tratando acentuações e padronizando o espaçamento entre palavras e letras.
 
 ---
 
