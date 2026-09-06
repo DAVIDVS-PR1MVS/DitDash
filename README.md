@@ -2,7 +2,7 @@
 
   <img src="assets/logo.png" alt="DitPlex Logo" width="120" />
 
-  # DitDash
+  # DitPlex
 
   **CLI Morse Academy • Transmissor e Decodificador em Linha de Comando**
 
