@@ -96,7 +96,7 @@ def main():
 
     args = parser.parse_args()
 
-    root_dir = Path(__file__).parent.resolve()
+    root_dir = Path(__file__).parent.parent.resolve()
     source_path = root_dir / args.source
     icon_path = root_dir / args.icon
 
