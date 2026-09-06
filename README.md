@@ -14,13 +14,13 @@
 
 ---
 
-## 📌 Sobre
+## Sobre
 
 O **DitDash** é uma ferramenta de linha de comando leve voltada para a conversão bidirecional entre texto e Código Morse. O projeto foi estruturado para realizar o tratamento automático das cadeias de caracteres inseridas, tratando acentuações e padronizando o espaçamento entre palavras e letras.
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 - **Tradução Bidirecional:**
   - **Texto ➔ Morse:** Converte palavras do alfabeto latino para sequências de pontos (`.`) e traços (`-`).
@@ -34,7 +34,7 @@ O **DitDash** é uma ferramenta de linha de comando leve voltada para a convers�
 
 ---
 
-## 🔮 Futuras Implementações (Roadmap)
+## Futuras Implementações (Roadmap)
 
 - [ ] **Sinais Sonoros:** Reprodução de áudio dos impulsos de frequência para cada ponto e traço.
 - [ ] **Tabela Numérica:** Inclusão de numerais (0-9) e símbolos de pontuação no dicionário de conversão.
