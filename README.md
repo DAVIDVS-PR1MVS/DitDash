@@ -56,7 +56,9 @@ O repositório inclui o script `build.py` para automatizar a geração do execut
 
 ---
 
-Este projeto está distribuído sob a licença MIT. Consulte o arquivo LICENSE para mais detalhes.
+## Licença
 
+* O **código-fonte** deste projeto está licenciado sob a [Licença MIT](LICENSE).
+* Os **ativos visuais, marca e design** do projeto **DitPlex** estão protegidos sob [Todos os Direitos Reservados](LICENSE-ASSETS.md).
 ---
 
