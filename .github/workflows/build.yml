@@ -1,4 +1,4 @@
-name: Build DitDash Executables
+name: Criar executáveis do DitPlex
 
 on:
   push:
@@ -7,25 +7,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build em ${{ matrix.platform }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            platform: Windows-x64
-            extension: .exe
-          - os: ubuntu-latest
-            platform: Linux-x86_64
-            extension: ''
-          - os: macos-latest
-            platform: macOS-x64
-            extension: ''
-
+  build-windows:
+    name: Build Windows (.exe)
+    runs-on: windows-latest
     steps:
-      - name: Checkout do Repositório
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
       - name: Configurar Python
@@ -33,40 +19,66 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Definir Nome Dinâmico do Binário
-        shell: bash
+      - name: Instalar PyInstaller e compilar
         run: |
-          VERSION="${{ github.ref_name }}"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="dev"
-          fi
-          echo "BINARY_NAME=DitDash-${VERSION}-${{ matrix.platform }}" >> $GITHUB_ENV
+          python -m pip install --upgrade pip pyinstaller
+          python Scripts/build.py --name DitPlex --clean
 
-      - name: Executar Compilação
-        shell: bash
+      - name: Renomear executável
         run: |
-          python Scripts/build.py --isolated --clean --name "${{ env.BINARY_NAME }}"
+          move dist\DitPlex.exe dist\DitPlex-Windows-x64.exe
 
-      - name: Armazenar Artefato
-        uses: actions/upload-artifact@v4
+      - name: Publicar executável do Windows na Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
         with:
-          name: ${{ env.BINARY_NAME }}
-          path: dist/${{ env.BINARY_NAME }}${{ matrix.extension }}
+          files: dist/DitPlex-Windows-x64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  release:
-    name: Publicar na Página de Releases
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+  build-linux-rpm:
+    name: Build Linux (.rpm Fedora)
     runs-on: ubuntu-latest
     steps:
-      - name: Baixar Executáveis
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
 
-      - name: Criar GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          files: artifacts/**/*
+          python-version: '3.11'
+
+      - name: Instalar PyInstaller e compilar binário
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+          python Scripts/build.py --name DitPlex --clean
+
+      - name: Instalar ferramentas para geração de pacote RPM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm
+          sudo gem install --no-document fpm
+
+      - name: Empacotar em formato .rpm
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          if [ -z "$VERSION" ] || [ "$VERSION" = "$GITHUB_REF_NAME" ]; then
+            VERSION="1.0.2"
+          fi
+
+          fpm -s dir -t rpm \
+            -n DitPlex \
+            -v "$VERSION" \
+            --architecture x86_64 \
+            --description "Utilitário DitPlex" \
+            dist/DitPlex=/usr/bin/DitPlex \
+            assets/icon.png=/usr/share/icons/hicolor/256x256/apps/ditplex.png \
+            ditplex.desktop=/usr/share/applications/ditplex.desktop
+
+      - name: Publicar pacote RPM na Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: DitPlex-*.x86_64.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
