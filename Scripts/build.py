@@ -167,11 +167,9 @@ def main():
     else:
         print_warning(f"Ícone não encontrado em '{icon_path}'. O build continuará sem ícone.")
 
-    # Exclusão de módulos desnecessários (ctypes mantido para suporte ao Windows)
+    # Apenas exclusões seguras que não afetam a biblioteca padrão (pathlib, zipfile, etc.)
     excluded_modules = [
-        "tkinter", "unittest", "email", "http", "xml",
-        "asyncio", "pydoc", "multiprocessing", "urllib",
-        "sqlite3", "logging"
+        "tkinter", "unittest", "pydoc", "sqlite3"
     ]
     for module in excluded_modules:
         cmd.append(f"--exclude-module={module}")
