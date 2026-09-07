@@ -12,7 +12,7 @@ import sys
 import time
 from pathlib import Path
 
-# Habilita suporte a cores ANSI no terminal Windows quando executado diretamente
+# Habilita suporte a cores ANSI no terminal Windows
 if sys.platform == "win32":
     os.system("")
 
@@ -118,12 +118,6 @@ def main():
         help="Caminho para o ícone .ico relativo à raiz (Padrão: assets/icon.ico)"
     )
     parser.add_argument(
-        "--arch",
-        type=str,
-        choices=["x86_64", "x86", "arm64", "universal2"],
-        help="Arquitetura do sistema alvo"
-    )
-    parser.add_argument(
         "--isolated",
         action="store_true",
         help="Gera o executável utilizando um venv limpo para reduzir o tamanho"
@@ -136,7 +130,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Localização dinâmica do diretório raiz do repositório
     current = Path(__file__).resolve().parent
     if (current / "src").exists():
         root_dir = current
@@ -174,14 +167,11 @@ def main():
     else:
         print_warning(f"Ícone não encontrado em '{icon_path}'. O build continuará sem ícone.")
 
-    if args.arch:
-        cmd.append(f"--target-architecture={args.arch}")
-
-    # Exclusão de módulos nativos não utilizados pelo DitPlex para otimização de tamanho
+    # Exclusão de módulos desnecessários (ctypes mantido para suporte ao Windows)
     excluded_modules = [
         "tkinter", "unittest", "email", "http", "xml",
         "asyncio", "pydoc", "multiprocessing", "urllib",
-        "sqlite3", "ctypes", "logging"
+        "sqlite3", "logging"
     ]
     for module in excluded_modules:
         cmd.append(f"--exclude-module={module}")
