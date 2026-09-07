@@ -72,7 +72,7 @@ jobs:
             --architecture x86_64 \
             --description "Utilitário DitPlex" \
             dist/DitPlex=/usr/bin/DitPlex \
-            assets/icon.png=/usr/share/icons/hicolor/256x256/apps/ditplex.png \
+            assets/logo.png=/usr/share/icons/hicolor/256x256/apps/ditplex.png \
             ditplex.desktop=/usr/share/applications/ditplex.desktop
 
       - name: Publicar pacote RPM na Release
