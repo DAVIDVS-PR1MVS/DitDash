@@ -45,7 +45,7 @@ jobs:
       - name: Executar Compilação
         shell: bash
         run: |
-          python scripts/build.py --isolated --clean --name "${{ env.BINARY_NAME }}"
+          python Scripts/build.py --isolated --clean --name "${{ env.BINARY_NAME }}"
 
       - name: Armazenar Artefato
         uses: actions/upload-artifact@v4
@@ -70,4 +70,3 @@ jobs:
           files: artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
