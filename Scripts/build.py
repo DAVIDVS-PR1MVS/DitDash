@@ -68,15 +68,14 @@ def setup_isolated_venv(venv_dir: Path) -> Path:
     subprocess.run([sys.executable, "-m", "venv", str(venv_dir)], check=True)
 
     if sys.platform == "win32":
-        pip_exe = venv_dir / "Scripts" / "pip.exe"
+        python_exe = venv_dir / "Scripts" / "python.exe"
         pyinstaller_exe = venv_dir / "Scripts" / "pyinstaller.exe"
     else:
-        pip_exe = venv_dir / "bin" / "pip"
+        python_exe = venv_dir / "bin" / "python"
         pyinstaller_exe = venv_dir / "bin" / "pyinstaller"
 
     print_step("Instalando gerador de binários em ambiente isolado", "pyinstaller")
-    subprocess.run([str(pip_exe), "install", "--quiet", "--upgrade", "pip"], check=True)
-    subprocess.run([str(pip_exe), "install", "--quiet", "pyinstaller"], check=True)
+    subprocess.run([str(python_exe), "-m", "pip", "install", "--quiet", "pyinstaller"], check=True)
 
     return pyinstaller_exe
 
