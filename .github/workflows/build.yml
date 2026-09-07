@@ -1,0 +1,73 @@
+name: Build DitDash Executables
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build em ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: Windows-x64
+            extension: .exe
+          - os: ubuntu-latest
+            platform: Linux-x86_64
+            extension: ''
+          - os: macos-latest
+            platform: macOS-x64
+            extension: ''
+
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Definir Nome Dinâmico do Binário
+        shell: bash
+        run: |
+          VERSION="${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="dev"
+          fi
+          echo "BINARY_NAME=DitDash-${VERSION}-${{ matrix.platform }}" >> $GITHUB_ENV
+
+      - name: Executar Compilação
+        shell: bash
+        run: |
+          python scripts/build.py --isolated --clean --name "${{ env.BINARY_NAME }}"
+
+      - name: Armazenar Artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}
+          path: dist/${{ env.BINARY_NAME }}${{ matrix.extension }}
+
+  release:
+    name: Publicar na Página de Releases
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar Executáveis
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Criar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
