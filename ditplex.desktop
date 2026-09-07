@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=DitPlex
+Comment=Utilitário DitPlex
+Exec=/usr/bin/DitPlex
+Icon=ditplex
+Terminal=true
+Categories=Utility;
