@@ -168,15 +168,27 @@ jobs:
           python -m pip install --upgrade pip pyinstaller
           python Scripts/build.py --clean
 
-      - name: Install Flatpak Builder
+      - name: Install Flatpak Builder and ImageMagick
         run: |
           sudo apt-get update -y
-          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y flatpak flatpak-builder
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y flatpak flatpak-builder imagemagick
 
       - name: Add Flathub Repository and Runtimes
         run: |
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+
+      - name: Resize Icon and Fix Desktop File for Flatpak
+        run: |
+          if [ -f "assets/logo.png" ]; then
+            convert assets/logo.png -resize 256x256 assets/logo.png
+          elif [ -f "logo.png" ]; then
+            convert logo.png -resize 256x256 logo.png
+          fi
+
+          if [ -f "ditplex.desktop" ]; then
+            sed -i 's/Icon=.*/Icon=org.ditplex.DitPlex/' ditplex.desktop
+          fi
 
       - name: Build Flatpak App
         run: |
