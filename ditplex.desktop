@@ -2,7 +2,7 @@
 Type=Application
 Name=DitPlex
 Comment=Utilitário DitPlex
-Exec=/usr/bin/DitPlex
+Exec=DitPlex
 Icon=ditplex
 Terminal=true
 Categories=Utility;
