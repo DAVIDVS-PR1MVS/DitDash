@@ -33,7 +33,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DitPlex-Windows
-          path: dist/DitPlex.exe
+          path: dist/*.exe
+          if-no-files-found: error
 
   build-linux-packages:
     name: Build Linux Native Packages (DEB, RPM, Arch)
@@ -48,10 +49,14 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Build Dependencies and FPM
+      - name: Install System Packaging Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev build-essential libarchive-tools rpm bsdtar zstd
+          sudo apt-get update -y
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+            ruby ruby-dev build-essential rpm zstd libarchive-tools
+
+      - name: Install FPM Gem
+        run: |
           sudo gem install --no-document fpm
 
       - name: Install PyInstaller and Build Linux Binary
@@ -65,40 +70,64 @@ jobs:
           mkdir -p pkg_root/usr/share/applications
           mkdir -p pkg_root/usr/share/icons/hicolor/256x256/apps
 
-          cp dist/DitPlex pkg_root/usr/bin/DitPlex
+          if [ -f "dist/DitPlex" ]; then
+            cp dist/DitPlex pkg_root/usr/bin/DitPlex
+          elif [ -f "dist/ditplex" ]; then
+            cp dist/ditplex pkg_root/usr/bin/DitPlex
+          else
+            cp dist/* pkg_root/usr/bin/DitPlex
+          fi
           chmod +x pkg_root/usr/bin/DitPlex
-          cp ditplex.desktop pkg_root/usr/share/applications/ditplex.desktop
-          cp assets/logo.png pkg_root/usr/share/icons/hicolor/256x256/apps/ditplex.png
+
+          if [ -f "ditplex.desktop" ]; then
+            cp ditplex.desktop pkg_root/usr/share/applications/ditplex.desktop
+          else
+            echo "[Desktop Entry]" > pkg_root/usr/share/applications/ditplex.desktop
+            echo "Name=DitPlex" >> pkg_root/usr/share/applications/ditplex.desktop
+            echo "Exec=DitPlex" >> pkg_root/usr/share/applications/ditplex.desktop
+            echo "Icon=ditplex" >> pkg_root/usr/share/applications/ditplex.desktop
+            echo "Type=Application" >> pkg_root/usr/share/applications/ditplex.desktop
+            echo "Terminal=true" >> pkg_root/usr/share/applications/ditplex.desktop
+          fi
+
+          if [ -f "assets/logo.png" ]; then
+            cp assets/logo.png pkg_root/usr/share/icons/hicolor/256x256/apps/ditplex.png
+          elif [ -f "logo.png" ]; then
+            cp logo.png pkg_root/usr/share/icons/hicolor/256x256/apps/ditplex.png
+          fi
+
+      - name: Sanitize Version Tag
+        id: version
+        run: |
+          TAG_CLEAN=$(echo "${GITHUB_REF_NAME}" | sed -E 's/^v//')
+          if [[ ! "$TAG_CLEAN" =~ ^[0-9] ]]; then
+            TAG_CLEAN="1.1.1"
+          fi
+          echo "CLEAN_VERSION=${TAG_CLEAN}" >> $GITHUB_ENV
 
       - name: Build DEB Package
         run: |
-          TAG_CLEAN="${GITHUB_REF_NAME#v}"
-          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
           fpm -s dir -t deb \
             -n DitPlex \
-            -v "$TAG_CLEAN" \
+            -v "$CLEAN_VERSION" \
             -C pkg_root \
             --prefix / \
             --description "Utilitario DitPlex"
 
       - name: Build RPM Package
         run: |
-          TAG_CLEAN="${GITHUB_REF_NAME#v}"
-          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
           fpm -s dir -t rpm \
             -n DitPlex \
-            -v "$TAG_CLEAN" \
+            -v "$CLEAN_VERSION" \
             -C pkg_root \
             --prefix / \
             --description "Utilitario DitPlex"
 
-      - name: Build Arch Linux Package (.pkg.tar.zst)
+      - name: Build Arch Linux Package
         run: |
-          TAG_CLEAN="${GITHUB_REF_NAME#v}"
-          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
           fpm -s dir -t pacman \
             -n DitPlex \
-            -v "$TAG_CLEAN" \
+            -v "$CLEAN_VERSION" \
             -C pkg_root \
             --prefix / \
             --description "Utilitario DitPlex"
@@ -119,7 +148,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DitPlex-ArchLinux
-          path: "*.pkg.tar.zst"
+          path: "*.pkg.tar.*"
 
   build-flatpak:
     name: Build Flatpak Package
@@ -141,19 +170,21 @@ jobs:
 
       - name: Install Flatpak Builder
         run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
+          sudo apt-get update -y
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y flatpak flatpak-builder
 
       - name: Add Flathub Repository and Runtimes
         run: |
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y --non-interactive flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+          flatpak install --user -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
 
       - name: Build Flatpak App
         run: |
-          TAG_CLEAN="${GITHUB_REF_NAME#v}"
-          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
-          flatpak-builder --force-clean --repo=repo build-dir org.ditplex.DitPlex.yml
+          TAG_CLEAN=$(echo "${GITHUB_REF_NAME}" | sed -E 's/^v//')
+          if [[ ! "$TAG_CLEAN" =~ ^[0-9] ]]; then
+            TAG_CLEAN="1.1.1"
+          fi
+          flatpak-builder --disable-rofiles-fuse --force-clean --repo=repo build-dir org.ditplex.DitPlex.yml
           flatpak build-bundle repo "DitPlex-${TAG_CLEAN}.flatpak" org.ditplex.DitPlex
 
       - name: Upload Flatpak Artifact
