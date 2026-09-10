@@ -181,9 +181,9 @@ jobs:
       - name: Resize Icon and Fix Desktop File for Flatpak
         run: |
           if [ -f "assets/logo.png" ]; then
-            convert assets/logo.png -resize 256x256 assets/logo.png
+            convert assets/logo.png -resize "256x256!" assets/logo.png
           elif [ -f "logo.png" ]; then
-            convert logo.png -resize 256x256 logo.png
+            convert logo.png -resize "256x256!" logo.png
           fi
 
           if [ -f "ditplex.desktop" ]; then
