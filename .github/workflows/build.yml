@@ -1,4 +1,4 @@
-name: Criar executáveis do DitPlex
+name: Build and Release DitPlex
 
 on:
   push:
@@ -6,164 +6,205 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
-    name: Build Windows (.exe)
+    name: Build Windows Executable
     runs-on: windows-latest
+
     steps:
-      - name: Checkout do repositório
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configurar Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Instalar PyInstaller e compilar
-        run: |
-          python -m pip install --upgrade pip pyinstaller
-          python Scripts/build.py --name DitPlex --clean
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
 
-      - name: Padronizar nome do executável
-        shell: bash
-        run: |
-          TAG_CLEAN="${GITHUB_REF_NAME#v}"
-          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then
-            TAG_CLEAN="1.0.3"
-          fi
-          mv "dist/DitPlex.exe" "dist/DitPlex-${TAG_CLEAN}-x64.exe"
+      - name: Build Windows Exe
+        run: python Scripts/build.py --clean
 
-      - name: Publicar executável do Windows na Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
         with:
-          files: dist/DitPlex-*-x64.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: DitPlex-Windows
+          path: dist/DitPlex.exe
 
   build-linux-packages:
-    name: Build Pacotes Linux (.rpm, .deb, .pkg.tar.zst)
+    name: Build Linux Native Packages (DEB, RPM, Arch)
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout do repositório
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configurar Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Instalar PyInstaller e compilar binário
-        run: |
-          python -m pip install --upgrade pip pyinstaller
-          python Scripts/build.py --name DitPlex --clean
-
-      - name: Instalar ferramentas de empacotamento (FPM e Pacman)
+      - name: Install Build Dependencies and FPM
         run: |
           sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm bsdtar zstd
+          sudo apt-get install -y ruby ruby-dev build-essential libarchive-tools rpm bsdtar zstd
           sudo gem install --no-document fpm
 
-      - name: Gerar Pacotes Linux (.rpm, .deb, .pkg.tar.zst)
+      - name: Install PyInstaller and Build Linux Binary
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+          python Scripts/build.py --clean
+
+      - name: Prepare Packaging Structure
+        run: |
+          mkdir -p pkg_root/usr/bin
+          mkdir -p pkg_root/usr/share/applications
+          mkdir -p pkg_root/usr/share/icons/hicolor/256x256/apps
+
+          cp dist/DitPlex pkg_root/usr/bin/DitPlex
+          chmod +x pkg_root/usr/bin/DitPlex
+          cp ditplex.desktop pkg_root/usr/share/applications/ditplex.desktop
+          cp assets/logo.png pkg_root/usr/share/icons/hicolor/256x256/apps/ditplex.png
+
+      - name: Build DEB Package
         run: |
           TAG_CLEAN="${GITHUB_REF_NAME#v}"
-          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then
-            TAG_CLEAN="1.0.3"
-          fi
-
-          if [[ "$TAG_CLEAN" == *"-"* ]]; then
-            VERSION="${TAG_CLEAN%%-*}"
-            ITERATION="${TAG_CLEAN#*-}"
-          else
-            VERSION="$TAG_CLEAN"
-            ITERATION="1"
-          fi
-
-          # 1. Empacotar RPM (Fedora, RHEL, openSUSE)
-          fpm -s dir -t rpm \
-            -n DitPlex \
-            -v "$VERSION" \
-            --iteration "$ITERATION" \
-            --architecture x86_64 \
-            --description "Utilitário DitPlex" \
-            dist/DitPlex=/usr/bin/DitPlex \
-            assets/logo.png=/usr/share/icons/hicolor/256x256/apps/ditplex.png \
-            ditplex.desktop=/usr/share/applications/ditplex.desktop
-
-          # 2. Empacotar DEB (Debian, Ubuntu, Mint)
+          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
           fpm -s dir -t deb \
             -n DitPlex \
-            -v "$VERSION" \
-            --iteration "$ITERATION" \
-            --architecture amd64 \
-            --description "Utilitário DitPlex" \
-            dist/DitPlex=/usr/bin/DitPlex \
-            assets/logo.png=/usr/share/icons/hicolor/256x256/apps/ditplex.png \
-            ditplex.desktop=/usr/share/applications/ditplex.desktop
+            -v "$TAG_CLEAN" \
+            -C pkg_root \
+            --prefix / \
+            --description "Utilitario DitPlex"
 
-          # 3. Empacotar Pacman (Arch Linux, Manjaro)
+      - name: Build RPM Package
+        run: |
+          TAG_CLEAN="${GITHUB_REF_NAME#v}"
+          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
+          fpm -s dir -t rpm \
+            -n DitPlex \
+            -v "$TAG_CLEAN" \
+            -C pkg_root \
+            --prefix / \
+            --description "Utilitario DitPlex"
+
+      - name: Build Arch Linux Package (.pkg.tar.zst)
+        run: |
+          TAG_CLEAN="${GITHUB_REF_NAME#v}"
+          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
           fpm -s dir -t pacman \
             -n DitPlex \
-            -v "$VERSION" \
-            --iteration "$ITERATION" \
-            --architecture x86_64 \
-            --description "Utilitário DitPlex" \
-            dist/DitPlex=/usr/bin/DitPlex \
-            assets/logo.png=/usr/share/icons/hicolor/256x256/apps/ditplex.png \
-            ditplex.desktop=/usr/share/applications/ditplex.desktop
+            -v "$TAG_CLEAN" \
+            -C pkg_root \
+            --prefix / \
+            --description "Utilitario DitPlex"
 
-      - name: Publicar Pacotes Linux na Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+      - name: Upload DEB Artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: |
-            DitPlex-*.x86_64.rpm
-            DitPlex-*.amd64.deb
-            DitPlex-*.pkg.tar.zst
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: DitPlex-Debian-Ubuntu
+          path: "*.deb"
+
+      - name: Upload RPM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DitPlex-Fedora-RPM
+          path: "*.rpm"
+
+      - name: Upload Arch Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DitPlex-ArchLinux
+          path: "*.pkg.tar.zst"
 
   build-flatpak:
-    name: Build Flatpak (.flatpak)
+    name: Build Flatpak Package
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout do repositório
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configurar Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Compilar binário Linux
+      - name: Install PyInstaller and Build Linux Binary
         run: |
           python -m pip install --upgrade pip pyinstaller
-          python Scripts/build.py --name DitPlex --clean
+          python Scripts/build.py --clean
 
-      - name: Instalar Flatpak Builder
+      - name: Install Flatpak Builder
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
 
-      - name: Adicionar repositório Flathub
+      - name: Add Flathub Repository and Runtimes
         run: |
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+          flatpak install --user -y --non-interactive flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
 
-      - name: Construir Pacote Flatpak Bundle
+      - name: Build Flatpak App
         run: |
           TAG_CLEAN="${GITHUB_REF_NAME#v}"
-          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then
-            TAG_CLEAN="1.0.3"
-          fi
-
-          flatpak-builder --repo=repo --force-clean build-dir org.ditplex.DitPlex.yml
+          if [ -z "$TAG_CLEAN" ] || [ "$TAG_CLEAN" = "$GITHUB_REF_NAME" ]; then TAG_CLEAN="1.0.3"; fi
+          flatpak-builder --force-clean --repo=repo build-dir org.ditplex.DitPlex.yml
           flatpak build-bundle repo "DitPlex-${TAG_CLEAN}.flatpak" org.ditplex.DitPlex
 
-      - name: Publicar Flatpak na Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+      - name: Upload Flatpak Artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: DitPlex-*.flatpak
+          name: DitPlex-Flatpak
+          path: "*.flatpak"
+
+  release:
+    name: Publish Github Release
+    needs: [build-windows, build-linux-packages, build-flatpak]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DitPlex-Windows
+          path: release_files/
+
+      - name: Download DEB Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DitPlex-Debian-Ubuntu
+          path: release_files/
+
+      - name: Download RPM Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DitPlex-Fedora-RPM
+          path: release_files/
+
+      - name: Download Arch Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DitPlex-ArchLinux
+          path: release_files/
+
+      - name: Download Flatpak Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DitPlex-Flatpak
+          path: release_files/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_files/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
