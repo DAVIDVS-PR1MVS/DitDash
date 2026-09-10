@@ -36,7 +36,7 @@ def Menu():
  | |_| | | |_ |  __/| |  __/>  <   
  |____/|_|\__||_|   |_|\___/_/\_\  
                                            
-       [ CLI Morse Academy • v1.1.0 ]      
+       [ CLI Morse Academy • v1.1.1 ]      
  ===========================================
                                            
    1. Transmitir  (Texto -> Morse)         
