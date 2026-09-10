@@ -167,7 +167,7 @@ def main():
     else:
         print_warning(f"Ícone não encontrado em '{icon_path}'. O build continuará sem ícone.")
 
-    # Apenas exclusões seguras que não afetam a biblioteca padrão (pathlib, zipfile, etc.)
+    # Exclusões seguras para manter a estabilidade da biblioteca padrão do Python
     excluded_modules = [
         "tkinter", "unittest", "pydoc", "sqlite3"
     ]
