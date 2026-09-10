@@ -1,0 +1,24 @@
+app-id: org.ditplex.DitPlex
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: DitPlex
+finish-args:
+  - --device=dri
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+modules:
+  - name: ditplex
+    buildsystem: simple
+    build-commands:
+      - install -D -m755 DitPlex /app/bin/DitPlex
+      - install -D -m644 ditplex.desktop /app/share/applications/org.ditplex.DitPlex.desktop
+      - install -D -m644 logo.png /app/share/icons/hicolor/256x256/apps/org.ditplex.DitPlex.png
+    sources:
+      - type: file
+        path: dist/DitPlex
+      - type: file
+        path: ditplex.desktop
+      - type: file
+        path: assets/logo.png
