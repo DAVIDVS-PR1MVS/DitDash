@@ -3,6 +3,19 @@ import string
 import unicodedata
 import re
 import sys
+import platform
+
+#///////////////////////
+version="1.2.0"
+operational=platform.system()
+arch=platform.machine()
+#///////////////////////
+VERDE = "\033[32m"
+CIANO = "\033[36m"
+AMARELO = "\033[33m"
+CINZA = "\033[90m"
+RESET = "\033[0m"
+#///////////////////////
 
 morse=[
     #a-i (a, b, c, d, e, f, g, h, i)
@@ -36,7 +49,7 @@ def Menu():
  | |_| | | |_ |  __/| |  __/>  <   
  |____/|_|\__||_|   |_|\___/_/\_\  
                                            
-       [ CLI Morse Academy • v1.1.1 ]      
+                                          
  ===========================================
                                            
    1. Transmitir  (Texto -> Morse)         
@@ -45,7 +58,7 @@ def Menu():
                                            
  ===========================================
 """
-    print(f"\033[32m{menu}\033[0m")
+    print(f"{VERDE}{menu}{RESET}")
 #///////////////////////
 thisnamebecauseyes = " "
 number = 0
@@ -107,6 +120,9 @@ def Mode():
         input("\nPressione Enter para continuar...")
     elif number == 3:
         sys.exit()
+    elif option == "--info":
+        print(f"{VERDE}[Version]:{RESET} {version} \n{VERDE}[OS/Arch]:{RESET} {operational}/{arch} \n{VERDE}[License]:{RESET} MIT")
+        input("\nPressione Enter para voltar...")
     else:
         print("Esse modo Não existe, tente novamente")
         input("\nPressione Enter para tentar novamente...")
