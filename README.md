@@ -39,7 +39,6 @@ O **DitPlex** é uma ferramenta de linha de comando leve voltada para a convers�
 ## Futuras Implementações (Roadmap)
 
 - [ ] **Sinais Sonoros:** Reprodução de áudio dos impulsos de frequência para cada ponto e traço.
-- [ ] **Tabela Numérica:** Inclusão de numerais (0-9) e símbolos de pontuação no dicionário de conversão.
 - [ ] **Exportação de Arquivos:** Salvamento automático das traduções em arquivos de texto `.txt`.
 - [ ] **Modo de Aprendizado:** O projeto ainda não possui um módulo de treinamento. Caso haja interesse da comunidade, essa função poderá ser desenvolvida no futuro.
 
