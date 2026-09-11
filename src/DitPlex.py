@@ -1,12 +1,11 @@
 import os
-import string
 import unicodedata
 import re
 import sys
 import platform
 
 #///////////////////////
-version="1.2.0"
+version="1.3.0"
 operational=platform.system()
 arch=platform.machine()
 #///////////////////////
@@ -16,7 +15,6 @@ AMARELO = "\033[33m"
 CINZA = "\033[90m"
 RESET = "\033[0m"
 #///////////////////////
-
 morse=[
     #a-i (a, b, c, d, e, f, g, h, i)
     ".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..",
@@ -35,7 +33,6 @@ letters=[
 ]
 key=dict(zip(letters, morse))
 key2=dict(zip(morse, letters))
-
 #///////////////////////
 def Clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -120,16 +117,56 @@ def Mode():
         input("\nPressione Enter para continuar...")
     elif number == 3:
         sys.exit()
-    elif option == "--info":
-        print(f"{VERDE}[Version]:{RESET} {version} \n{VERDE}[OS/Arch]:{RESET} {operational}/{arch} \n{VERDE}[License]:{RESET} MIT")
-        input("\nPressione Enter para voltar...")
     else:
         print("Esse modo Não existe, tente novamente")
         input("\nPressione Enter para tentar novamente...")
 #///////////////////////
-while True:
-    Menu()
-    option = input("Selecione o Modo: ")
-    Number()
-    Mode()
+if len(sys.argv) > 1:
+    arg = sys.argv[1].lower()
+    
+    if arg in ["--info", "-v"]:
+        print(f"{VERDE}[Version]:{RESET} {version} {VERDE}[OS/Arch]:{RESET} {operational}/{arch} {VERDE}[License]:{RESET} MIT")
+        sys.exit(0)
+    elif arg in ["--help", "-h"]:
+        print(f"{VERDE}Uso:{RESET} DitPlex [opção] [conteúdo]\n")
+        print(f"{VERDE}Opções disponíveis:{RESET}")
+        print(f"  {VERDE}-t, --text{RESET} <texto>   Converte texto em código Morse.")
+        print(f"  {VERDE}-m, --morse{RESET} <morse>   Converte código Morse em texto.")
+        print(f"  {VERDE}-v, --info{RESET}          Exibe metadados, sistema e versão do aplicativo.")
+        print(f"  {VERDE}-h, --help{RESET}          Exibe este menu de ajuda.")
+        sys.exit(0)
+    elif arg in ["--text", "-t"]:
+        if len(sys.argv)>2:
+            entrada=sys.argv[2]
+            text=entrada
+            TEXT=Upper()
+            less=Accentless()
+            translate=Morse()
+            print(translate)
+        else:
+            print(f"Erro: Faltou informar o texto. Exemplo: DitPlex -t \"SOS\"")
+            sys.exit(1)
+        sys.exit(0)
+    elif arg in ["--morse", "-m"]:
+        if len(sys.argv)>2:
+            entrada=sys.argv[2]
+            text=entrada
+            translate=MinT()
+            print(translate)
+        else:
+            print(f"Erro: Faltou informar o código Morse. Exemplo: DitPlex -m \"... --- ...\"")
+            sys.exit(1)
+        sys.exit(0)
+    else:
+        print(f"Opção desconhecida: '{sys.argv[1]}'. Use --help para ver as opções disponíveis.")
+        sys.exit(1)
+#///////////////////////
+try:
+    while True:
+        Menu()
+        option = input("Selecione o Modo: ")
+        Number()
+        Mode()
+except KeyboardInterrupt:
+    sys.exit(0)
 #///////////////////////
